@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <meta name="color-scheme" content="dark">
+    <meta name="theme-color" content="#05050a">
+    <title>Focus</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='11' fill='none' stroke='%237aa7ff' stroke-width='4'/%3E%3C/svg%3E">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Instrument+Serif&display=swap" rel="stylesheet">
+    <style>
+        @layer base, layout, ui;
+        @layer base {
+            :root {
+                --text:#f4f4f8; --muted:#9a9ab0; --line:#ffffff1f; --panel:#0d0d16a6;
+                --accent:oklch(.76 .15 258); --good:oklch(.8 .17 155); --bad:oklch(.7 .2 25); --r:14px;
+                font-family:Inter,-apple-system,system-ui,sans-serif; font-size:clamp(15px,.9rem + .25vw,17px);
+                -webkit-font-smoothing:antialiased; color-scheme:dark;
+            }
+            *,*::before,*::after{box-sizing:border-box;margin:0}
+            body{min-height:100dvh;background:#05050a;color:var(--text);padding:max(1.5rem,env(safe-area-inset-top)) 1rem max(2rem,env(safe-area-inset-bottom))}
+            #bg{position:fixed;inset:0;width:100%;height:100%;z-index:-1}
+            button,input{font:inherit;color:inherit}
+            button{cursor:pointer;background:none;border:0}
+            :focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+            [v-cloak]{display:none}
+        }
+        @layer layout {
+            main{width:min(1040px,100%);margin-inline:auto;display:grid;gap:1.25rem;grid-template-columns:minmax(0,1fr) 300px;align-items:start}
+            aside{position:sticky;top:1.5rem;display:grid;gap:1.25rem}
+            @media(max-width:780px){main{grid-template-columns:1fr}aside{position:static;order:-1}}
+        }
+        @layer ui {
+            .card{background:var(--panel);border-radius:24px;padding:clamp(1.1rem,3vw,1.8rem);
+                box-shadow:inset 0 0 0 .5px var(--line),0 30px 80px #0006;backdrop-filter:blur(28px) saturate(170%)}
+            h1{font-family:"Instrument Serif",serif;font-weight:400;font-size:clamp(3rem,8vw,4.8rem);letter-spacing:-.03em;line-height:.95}
+            .sub{color:var(--muted);margin-top:.5rem;display:flex;gap:.6rem;align-items:center;flex-wrap:wrap}
+            .mode{font-size:.75rem;padding:.15rem .6rem;border-radius:99px;box-shadow:inset 0 0 0 .5px var(--line)}
+            .mode::before{content:"";display:inline-block;width:.45rem;height:.45rem;border-radius:50%;background:var(--good);margin-right:.4rem}
+            .mode.local::before{background:oklch(.82 .15 85)}
+            form{display:flex;gap:.6rem;margin-top:1.5rem}
+            input[type=text]{flex:1;min-width:0;padding:.85rem 1rem;border-radius:var(--r);border:0;background:#ffffff12;box-shadow:inset 0 0 0 .5px var(--line)}
+            input[type=text]:focus{outline:none;box-shadow:inset 0 0 0 1.5px var(--accent),0 0 0 4px oklch(.76 .15 258/.2)}
+            .btn{padding:.85rem 1.25rem;border-radius:var(--r);background:var(--text);color:#05050a;font-weight:600;transition:transform .15s}
+            .btn:active{transform:scale(.96)}
+            .mic{width:2.9rem;border-radius:var(--r);box-shadow:inset 0 0 0 .5px var(--line)}
+            .mic.on{background:var(--bad)}
+            .tools{display:flex;gap:.4rem;margin-top:1rem;flex-wrap:wrap}
+            .tools input{flex:1 1 9rem}
+            .chip{padding:.45rem .9rem;border-radius:99px;box-shadow:inset 0 0 0 .5px var(--line);color:var(--muted);text-transform:capitalize}
+            .chip[aria-pressed=true]{background:var(--text);color:#05050a;box-shadow:none}
+            ul{list-style:none;padding:0;margin-top:1rem;display:grid}
+            li{display:flex;align-items:center;gap:.7rem;padding:.85rem .2rem;border-top:.5px solid var(--line);background:transparent}
+            li:first-child{border-top:0}
+            .grip{color:var(--muted);cursor:grab;opacity:.35;touch-action:none;padding:0 .2rem}
+            li:hover .grip{opacity:1}
+            .sortable-ghost{opacity:.3}
+            .tick{width:1.55rem;height:1.55rem;flex:none;border-radius:50%;box-shadow:inset 0 0 0 1.5px var(--muted);display:grid;place-items:center;transition:background .2s,box-shadow .2s}
+            .tick svg{width:.9rem;stroke:#05050a;fill:none;stroke-width:3;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:20;stroke-dashoffset:20;transition:stroke-dashoffset .25s .05s}
+            .done .tick{background:var(--accent);box-shadow:none}.done .tick svg{stroke-dashoffset:0}
+            .title{flex:1;min-width:0;overflow-wrap:anywhere;cursor:text}
+            .done .title{color:var(--muted);text-decoration:line-through}
+            .edit{flex:1;padding:.35rem .6rem!important}
+            .del{color:var(--muted);padding:.3rem .5rem;border-radius:8px;opacity:0;transition:opacity .15s,color .15s}
+            li:hover .del,li:focus-within .del{opacity:1}.del:hover{color:var(--bad)}
+            @media(hover:none){.del{opacity:1}}
+            .empty{color:var(--muted);text-align:center;padding:2.5rem 0 1rem}
+            .err{margin-top:1rem;padding:.75rem 1rem;border-radius:var(--r);color:var(--bad);background:oklch(.7 .2 25/.12)}
+            .list-enter-active,.list-leave-active{transition:all .3s cubic-bezier(.2,.8,.2,1)}
+            .list-enter-from,.list-leave-to{opacity:0;transform:translateX(-14px)}
+            .list-move{transition:transform .3s cubic-bezier(.2,.8,.2,1)}
+            kbd{font:500 .72rem Inter;padding:.15rem .4rem;border-radius:6px;box-shadow:inset 0 0 0 .5px var(--line);color:var(--muted)}
+            dialog{margin:12vh auto auto;width:min(560px,calc(100vw - 2rem));padding:0;border:0;border-radius:20px;color:var(--text);background:#10101bee;box-shadow:inset 0 0 0 .5px var(--line),0 40px 100px #000a;backdrop-filter:blur(40px)}
+            dialog::backdrop{background:#0008;backdrop-filter:blur(4px)}
+            dialog input{width:100%;border-radius:0;background:transparent;box-shadow:none!important;padding:1.1rem 1.25rem;font-size:1.1rem;border-bottom:.5px solid var(--line)}
+            dialog button{display:flex;width:100%;justify-content:space-between;padding:.8rem 1.25rem;text-align:left}
+            dialog button:hover,dialog button:focus{background:#ffffff12;outline:none}
+            #ring{text-align:center}
+            #ring svg.r{width:100%;max-width:190px;height:auto;margin-inline:auto;display:block}
+            #ring .track{stroke:var(--line)}
+            #ring .bar{stroke:var(--accent);stroke-linecap:round;transition:stroke-dashoffset .8s cubic-bezier(.2,.8,.2,1),stroke .3s}
+            #ring .bar.all{stroke:var(--good)}
+            #ring .num{font:400 38px "Instrument Serif",serif;fill:var(--text)}
+            #ring .lbl{font-size:9px;fill:var(--muted)}
+            #ring dl{display:flex;justify-content:space-around;margin-top:1rem}
+            #ring dd{margin:0;font:400 2rem "Instrument Serif",serif}
+            #ring dt{color:var(--muted);font-size:.8rem}
+            #chart h3{font-size:.85rem;font-weight:500;color:var(--muted);margin-bottom:.8rem}
+            #chart canvas{max-height:150px}
+        }
+    </style>
+</head>
+<body>
+<canvas id="bg" aria-hidden="true"></canvas>
+<main>
+    <section class="card" id="app" v-cloak>
+        <h1>Focus</h1>
+        <p class="sub">
+            <span>{{ remaining === 0 && todos.length ? 'Everything is done.' : remaining + ' to go today.' }}</span>
+            <span class="mode" :class="mode">{{ mode === 'remote' ? 'Synced with API' : 'Saved on this device' }}</span>
+            <span><kbd>⌘K</kbd> commands</span>
+        </p>
+
+        <form @submit.prevent="add">
+            <input type="text" ref="newInput" v-model="draft" placeholder="Add a task (3–100 characters)" maxlength="100" aria-label="New task">
+            <button type="button" class="mic" :class="{on: listening}" @click="listen" aria-label="Add by voice" v-if="canSpeak">🎙</button>
+            <button class="btn">Add task</button>
+        </form>
+
+        <div class="tools">
+            <input type="text" ref="searchInput" v-model="q" placeholder="Search" aria-label="Search tasks">
+            <button v-for="f in ['all','active','done']" :key="f" class="chip" :aria-pressed="filter === f" @click="filter = f">{{ f }}</button>
+        </div>
+
+        <p class="err" v-if="err" role="alert">{{ err }}</p>
+
+        <transition-group name="list" tag="ul" id="list">
+            <li v-for="t in visible" :key="t.id" :class="{ done: t.completed }">
+                <span class="grip" aria-hidden="true">⋮⋮</span>
+                <button class="tick" @click="toggle(t, $event)" :aria-label="t.completed ? 'Mark as not done' : 'Mark as done'">
+                    <svg viewBox="0 0 16 16"><path d="M3 8.5l3.2 3L13 4.5"/></svg>
+                </button>
+                <input v-if="editing === t.id" class="edit" type="text" v-model="editText" maxlength="100"
+                       @keydown.enter="save(t)" @keydown.esc="editing = null" @blur="save(t)" :ref="el => el && el.focus()">
+                <span v-else class="title" @dblclick="editing = t.id; editText = t.title">{{ t.title }}</span>
+                <button class="del" @click="remove(t)" aria-label="Delete task">Delete</button>
+            </li>
+        </transition-group>
+
+        <p class="empty" v-if="!loading && !visible.length">
+            {{ todos.length ? 'No tasks match. Clear the search or filter.' : 'No tasks yet. Add your first one above.' }}
+        </p>
+
+        <dialog ref="pal" @click="$event.target === $refs.pal && $refs.pal.close()">
+            <input type="text" v-model="cq" placeholder="Type a command" aria-label="Command" @keydown.enter="cmds[0] && run(cmds[0])">
+            <button v-for="c in cmds" :key="c.n" @click="run(c)"><span>{{ c.n }}</span><kbd v-if="c.k">{{ c.k }}</kbd></button>
+        </dialog>
+    </section>
+
+    <aside>
+        <div class="card" id="ring"></div>
+        <div class="card" id="chart"></div>
+    </aside>
+</main>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/vue/3.5.13/vue.global.prod.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.3.1/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.3.1/umd/react-dom.production.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/htm@3.1.1/dist/htm.umd.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.2/Sortable.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/canvas-confetti/1.9.3/confetti.browser.min.js"></script>
+<script>
+    const API = "/api/todos";
+    const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const ls = {
+        get: (k, d) => { try { return JSON.parse(localStorage.getItem(k)) ?? d; } catch { return d; } },
+        set: (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} },
+    };
+    const vt = fn => (document.startViewTransition && !reduce) ? document.startViewTransition(fn) : fn();
+
+    async function http(url, opts = {}) {
+        const res = await fetch(url, { headers: { "Content-Type": "application/json" }, ...opts });
+        if (!res.ok) {
+            let msg = `Request failed (${res.status})`;
+            try { const b = await res.json(); msg = b.message || b.error || msg; } catch {}
+            throw new Error(msg);
+        }
+        return res.status === 204 ? null : res.json();
+    }
+
+    /* WebGL aurora background (no library) */
+    (function () {
+        const c = document.getElementById("bg"), gl = c.getContext("webgl");
+        if (!gl) return;
+        const sh = (t, s) => { const o = gl.createShader(t); gl.shaderSource(o, s); gl.compileShader(o); return o; };
+        const p = gl.createProgram();
+        gl.attachShader(p, sh(gl.VERTEX_SHADER, "attribute vec2 p;void main(){gl_Position=vec4(p,0.,1.);}"));
+        gl.attachShader(p, sh(gl.FRAGMENT_SHADER, `precision mediump float;uniform vec2 r,m;uniform float t;
+    float h(vec2 p){return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453);}
+    float n(vec2 p){vec2 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);return mix(mix(h(i),h(i+vec2(1,0)),f.x),mix(h(i+vec2(0,1)),h(i+vec2(1,1)),f.x),f.y);}
+    float fbm(vec2 p){float v=0.,a=.5;for(int i=0;i<5;i++){v+=a*n(p);p*=2.;a*=.5;}return v;}
+    void main(){vec2 u=gl_FragCoord.xy/r;vec2 q=u*vec2(r.x/r.y,1.)*1.6;
+      float w=fbm(q+vec2(t*.04,0.)+fbm(q*1.5-t*.03));
+      vec3 c=mix(vec3(.02,.02,.06),vec3(.1,.25,.85),w*w*1.4);
+      c+=vec3(.55,.2,.85)*pow(fbm(q*2.+t*.05+m),3.)*.5;
+      c*=smoothstep(1.3,.2,length(u-.5));gl_FragColor=vec4(c,1.);}`));
+        gl.linkProgram(p); gl.useProgram(p);
+        gl.bindBuffer(gl.ARRAY_BUFFER, gl.createBuffer());
+        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1,-1,1,-1,-1,1,1,1]), gl.STATIC_DRAW);
+        const a = gl.getAttribLocation(p, "p"); gl.enableVertexAttribArray(a); gl.vertexAttribPointer(a, 2, gl.FLOAT, false, 0, 0);
+        const U = n => gl.getUniformLocation(p, n); let mx = 0, my = 0;
+        const size = () => { c.width = innerWidth * .5; c.height = innerHeight * .5; gl.viewport(0, 0, c.width, c.height); };
+        addEventListener("resize", size); size();
+        addEventListener("pointermove", e => { mx = e.clientX / innerWidth; my = 1 - e.clientY / innerHeight; });
+        const frame = ms => {
+            gl.uniform2f(U("r"), c.width, c.height); gl.uniform1f(U("t"), ms / 1000); gl.uniform2f(U("m"), mx * .3, my * .3);
+            gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+            if (!reduce) requestAnimationFrame(frame);
+        };
+        requestAnimationFrame(frame);
+    })();
+
+    /* Vue 3: task list with API-first storage and on-device fallback */
+    Vue.createApp({
+        setup() {
+            const { ref, computed, watch, onMounted } = Vue;
+            const todos = ref([]), draft = ref(""), q = ref(""), filter = ref("all");
+            const editing = ref(null), editText = ref(""), err = ref(""), loading = ref(true);
+            const mode = ref("remote"), listening = ref(false), cq = ref("");
+            const pal = ref(null), newInput = ref(null), searchInput = ref(null);
+            const log = ref(ls.get("focus:log", []));
+            const canSpeak = !!(window.SpeechRecognition || window.webkitSpeechRecognition);
+
+            const remaining = computed(() => todos.value.filter(t => !t.completed).length);
+            const visible = computed(() => todos.value.filter(t =>
+                (filter.value === "all" || (filter.value === "done") === t.completed) &&
+                t.title.toLowerCase().includes(q.value.trim().toLowerCase())));
+
+            const store = async (method, id, body) => {
+                if (mode.value === "remote") return http(id ? `${API}/${id}` : API, { method, body: body && JSON.stringify(body) });
+                const all = ls.get("focus:todos", []);
+                if (method === "GET") return all;
+                if (method === "POST") { const t = { id: Date.now(), ...body }; ls.set("focus:todos", [...all, t]); return t; }
+                if (method === "PUT") { const t = { ...all.find(x => x.id == id), ...body }; ls.set("focus:todos", all.map(x => x.id == id ? t : x)); return t; }
+                ls.set("focus:todos", all.filter(x => x.id != id)); return null;
+            };
+            const order = () => ls.set("focus:order", todos.value.map(t => t.id));
+            const run = async fn => { err.value = ""; try { await fn(); } catch (e) { err.value = e.message; } };
+
+            const load = async () => {
+                try { todos.value = await store("GET"); }
+                catch { mode.value = "local"; todos.value = await store("GET"); }
+                const ord = ls.get("focus:order", []);
+                todos.value.sort((a, b) => (ord.indexOf(a.id) + 1 || 1e9) - (ord.indexOf(b.id) + 1 || 1e9));
+                loading.value = false;
+                if (!reduce) gsap.from(".card", { y: 28, opacity: 0, duration: 1, ease: "expo.out", stagger: .12 });
+            };
+
+            const stats = () => {
+                const days = [...Array(7)].map((_, i) => { const d = new Date(); d.setDate(d.getDate() - 6 + i); return d.toISOString().slice(0, 10); });
+                return {
+                    total: todos.value.length, done: todos.value.filter(t => t.completed).length,
+                    labels: days.map(d => new Date(d).toLocaleDateString(undefined, { weekday: "short" })),
+                    week: days.map(d => log.value.filter(x => x.slice(0, 10) === d).length),
+                };
+            };
+            watch([todos, log], () => { const detail = stats(); window.__stats = detail; window.dispatchEvent(new CustomEvent("focus:stats", { detail })); }, { deep: true, immediate: true });
+
+            const add = () => run(async () => {
+                const title = draft.value.trim();
+                if (title.length < 3 || title.length > 100) throw new Error("Title must be between 3 and 100 characters.");
+                const created = await store("POST", null, { title, completed: false });
+                vt(() => todos.value.push(created)); draft.value = ""; order();
+            });
+            const update = (t, patch) => run(async () => {
+                Object.assign(t, await store("PUT", t.id, { title: t.title, completed: t.completed, ...patch }));
+            });
+            const toggle = async (t, ev) => {
+                const btn = ev.currentTarget, completing = !t.completed;
+                await update(t, { completed: completing });
+                if (completing) {
+                    log.value = [...log.value, new Date().toISOString()]; ls.set("focus:log", log.value);
+                    if (!reduce) {
+                        const b = btn.getBoundingClientRect();
+                        confetti({ particleCount: 40, spread: 60, startVelocity: 22, ticks: 80, scalar: .8,
+                            origin: { x: (b.left + b.width / 2) / innerWidth, y: (b.top + b.height / 2) / innerHeight } });
+                        if (remaining.value === 0) confetti({ particleCount: 160, spread: 110, origin: { y: .6 } });
+                    }
+                } else if (log.value.length) { log.value = log.value.slice(0, -1); ls.set("focus:log", log.value); }
+            };
+            const save = t => {
+                if (editing.value !== t.id) return;
+                const title = editText.value.trim(); editing.value = null;
+                if (title && title !== t.title) update(t, { title });
+            };
+            const remove = t => run(async () => { await store("DELETE", t.id); todos.value = todos.value.filter(x => x.id !== t.id); order(); });
+
+            const listen = () => {
+                const SR = window.SpeechRecognition || window.webkitSpeechRecognition, r = new SR();
+                r.onstart = () => listening.value = true; r.onend = () => listening.value = false;
+                r.onresult = e => { draft.value = e.results[0][0].transcript.slice(0, 100); };
+                r.start();
+            };
+
+            const base = [
+                { n: "New task", k: "N", f: () => newInput.value.focus() },
+                { n: "Search tasks", k: "/", f: () => searchInput.value.focus() },
+                { n: "Show all", f: () => filter.value = "all" },
+                { n: "Show active", f: () => filter.value = "active" },
+                { n: "Show done", f: () => filter.value = "done" },
+                { n: "Delete completed tasks", f: () => todos.value.filter(t => t.completed).forEach(remove) },
+            ];
+            const cmds = computed(() => base.filter(c => c.n.toLowerCase().includes(cq.value.toLowerCase())));
+            const runCmd = c => { pal.value.close(); c.f(); };
+
+            onMounted(async () => {
+                await load();
+                Sortable.create(document.getElementById("list"), {
+                    handle: ".grip", animation: 180, ghostClass: "sortable-ghost",
+                    onEnd(e) {
+                        const { oldIndex: o, newIndex: n, from, item } = e; if (o === n) return;
+                        from.removeChild(item); from.insertBefore(item, from.children[o] || null);
+                        const ids = visible.value.map(t => t.id), a = todos.value;
+                        a.splice(a.findIndex(t => t.id === ids[n]), 0, a.splice(a.findIndex(t => t.id === ids[o]), 1)[0]);
+                        order();
+                    },
+                });
+                addEventListener("keydown", e => {
+                    const typing = /INPUT|TEXTAREA/.test(document.activeElement.tagName);
+                    if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") { e.preventDefault(); cq.value = ""; pal.value.showModal(); }
+                    else if (!typing && e.key === "/") { e.preventDefault(); searchInput.value.focus(); }
+                    else if (!typing && e.key.toLowerCase() === "n") { e.preventDefault(); newInput.value.focus(); }
+                });
+            });
+
+            return { todos, draft, q, filter, editing, editText, err, loading, mode, listening, canSpeak, cq, cmds, pal, newInput, searchInput,
+                remaining, visible, add, toggle, save, remove, listen, run: runCmd };
+        }
+    }).mount("#app");
+
+    /* React 18 + htm: progress ring and weekly Chart.js */
+    const html = htm.bind(React.createElement);
+    const useStats = () => {
+        const [s, setS] = React.useState(window.__stats || { total: 0, done: 0, labels: [], week: [] });
+        React.useEffect(() => {
+            const on = e => setS(e.detail);
+            addEventListener("focus:stats", on); return () => removeEventListener("focus:stats", on);
+        }, []);
+        return s;
+    };
+    function Ring() {
+        const s = useStats(), R = 52, C = 2 * Math.PI * R, pct = s.total ? s.done / s.total : 0;
+        return html`<div>
+    <svg class="r" viewBox="0 0 120 120" role="img" aria-label=${Math.round(pct * 100) + " percent complete"}>
+      <g transform="rotate(-90 60 60)" fill="none" stroke-width="8">
+        <circle class="track" cx="60" cy="60" r=${R} />
+        <circle class=${"bar" + (pct === 1 ? " all" : "")} cx="60" cy="60" r=${R} stroke-dasharray=${C} stroke-dashoffset=${C * (1 - pct)} />
+      </g>
+      <text class="num" x="60" y="62" text-anchor="middle">${Math.round(pct * 100)}%</text>
+      <text class="lbl" x="60" y="78" text-anchor="middle">complete</text>
+    </svg>
+    <dl><div><dd>${s.total - s.done}</dd><dt>Open</dt></div><div><dd>${s.done}</dd><dt>Done</dt></div></dl>
+  </div>`;
+    }
+    function Week() {
+        const s = useStats(), ref = React.useRef(), chart = React.useRef();
+        React.useEffect(() => {
+            chart.current = new Chart(ref.current, {
+                type: "bar",
+                data: { labels: s.labels, datasets: [{ data: s.week, borderRadius: 6, backgroundColor: "#7aa7ff", maxBarThickness: 22 }] },
+                options: { responsive: true, animation: { duration: 600 }, plugins: { legend: { display: false } },
+                    scales: { x: { grid: { display: false }, ticks: { color: "#9a9ab0" }, border: { display: false } },
+                        y: { beginAtZero: true, ticks: { precision: 0, color: "#9a9ab0" }, grid: { color: "#ffffff14" }, border: { display: false } } } },
+            });
+            return () => chart.current.destroy();
+        }, []);
+        React.useEffect(() => {
+            const c = chart.current; if (!c) return;
+            c.data.labels = s.labels; c.data.datasets[0].data = s.week; c.update();
+        }, [s]);
+        return html`<div><h3>Completed this week</h3><canvas ref=${ref}></canvas></div>`;
+    }
+    ReactDOM.createRoot(document.getElementById("ring")).render(html`<${Ring} />`);
+    ReactDOM.createRoot(document.getElementById("chart")).render(html`<${Week} />`);
+</script>
+</body>
+</html>
+</html>
